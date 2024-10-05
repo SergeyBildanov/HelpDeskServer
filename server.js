@@ -2,7 +2,8 @@ const http = require('http');
 const Koa = require('koa');
 const koaBody = require('koa-body');
 const app = new Koa();
-const formatDate = require("./formatDate")
+const formatDate = require("./formatDate");
+const { stat } = require('fs');
 
 // => Static file handling
 // const public = path.join(__dirname, '/public')
@@ -122,8 +123,12 @@ const formatDate = require("./formatDate")
     return;
    }
    if(method === "changeTicket"){
-    let {name, description} = ctx.request.body;
     console.log(ctx.request.body);
+    let {name, description} = ctx.request.body;
+    let status;
+    if(!(name&&description)){
+      status = JSON.parse(ctx.request.body).status;
+    }
     if(tickets.some(ticket => ticket.name === name)){
       ctx.response.body = "Ticket with this name exists!";
       ctx.response.status = 400;
@@ -134,7 +139,8 @@ const formatDate = require("./formatDate")
       ctx.response.status = 401;
       return;
     }
-    let date = new Date();
+    if(name && description){
+      let date = new Date();
     for(let item of tickets){
       if(item.id === Number(id)){
         item.name = name;
@@ -142,9 +148,21 @@ const formatDate = require("./formatDate")
         item.date = formatDate(date);
       }
     }
-    console.log(tickets)
+      console.log(tickets)
+      ctx.response.status = 201;
+      return;
+    }
+    if(JSON.stringify(status)){
+      for(let item of tickets){
+        if(item.id === Number(id)){
+          item.status = status
+        }
+    }
+    console.log(tickets)  
     ctx.response.status = 201;
-    return;
+      return;
+    }
+    
    }
    ctx.response.body = 'Ok';
  });
